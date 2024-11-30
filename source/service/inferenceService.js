@@ -11,14 +11,18 @@ async function predictClassification(model, image) {
         const score = await prediction.data(); // Ambil hasil prediksi sebagai array
         const confidenceScore = Math.max(...score) * 100; // Dapatkan skor kepercayaan tertinggi
 
-        // Tentukan label berdasarkan skor kepercayaan
+
         const label = confidenceScore > 50 ? "Cancer" : "Non-cancer";
 
         // Tentukan saran berdasarkan label prediksi
-        const suggestion = label === "Cancer"
-            ? "Segera periksa ke dokter!"
-            : "Penyakit kanker tidak terdeteksi.";
-
+        let suggestion = "";
+        if (label === "Cancer") {
+            suggestion = "Segera periksa ke dokter!";
+        } else if (label === "Non-cancer") {
+            suggestion = "Penyakit kanker tidak terdeteksi.";
+        } else {
+            suggestion = "Anda Sehat!";
+        }
         console.log("Skor Prediksi: ", score);
         console.log("Skor Kepercayaan: ", confidenceScore);
 

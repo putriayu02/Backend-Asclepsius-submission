@@ -2,6 +2,7 @@ const predictClassification = require("../service/inferenceService");
 const crypto = require("crypto");
 const storeData = require("../service/storeData");
 const path = require('path');
+const { Firestore } = require("@google-cloud/firestore");
 require('dotenv').config();
 
 async function postPredictHandler(request, h) {
@@ -28,35 +29,54 @@ async function postPredictHandler(request, h) {
     }).code(201);
 }
 
-async function predictHistories(req, res, next) {
+const predictHistories = async (_request, h) => {
     try {
-        const model = req.app.get('model');
+        // Mengambil jalur file kredensial
         const pathKey = path.resolve(process.env.FIRESTORE_KEY_PATH);
-        const { Firestore } = require("@google-cloud/firestore");
+        
+        // Inisialisasi instance Firestore
         const db = new Firestore({
-            projectId: "submissionmlgc-putriayu",
-            keyFilename: pathKey,
+            projectId: "submissionmlgc-putriayu",  // ID proyek Google Cloud
+            keyFilename: pathKey,  // Jalur ke file kredensial
         });
-        const predictCollection = db.collection("predictions");
-        const snapshot = await predictCollection.get();
 
-        const result = snapshot.docs.map(doc => ({
-            id: doc.id,
+        // Ambil semua dokumen dari koleksi "predictions"
+        const snapshot = await db.collection("predictions").get();
+
+        // Jika koleksi kosong, kirim respons kosong
+        if (snapshot.empty) {
+            return h.response({
+                status: "success",
+                data: [],
+            }).code(200);
+        }
+
+        // Format data hasil query
+        const data = snapshot.docs.map(doc => ({
+            id: doc.id, // ID dokumen
             history: {
-                result: doc.data().result,
-                createdAt: doc.data().createdAt,
-                suggestion: doc.data().suggestion,
-                id: doc.data().id,
+                result: doc.data().result, // hasil prediksi
+                createdAt: doc.data().createdAt, // waktu pembuatan dokumen
+                suggestion: doc.data().suggestion, // saran berdasarkan hasil prediksi
+                id: doc.id, // ID dokumen untuk bagian history
             },
         }));
 
-        res.status(200).json({
-            status: 'success',
-            data: result,
-        });
+        // Kirim respons ke klien
+        return h.response({
+            status: "success",
+            data,
+        }).code(200);
+
     } catch (error) {
-        next(error);
+        // Tangani error dan kirimkan respons
+        console.error(error);
+        return h.response({
+            status: "fail",
+            message: error.message || "Internal Server Error",
+        }).code(500);
     }
-}
+};
+
 
 module.exports = { postPredictHandler, predictHistories };
