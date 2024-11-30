@@ -4,11 +4,7 @@ const ValidationError = require("../exceptions/ValidationError");
 async function predictClassification(model, image) {
     try {
         // Decode dan resize gambar
-        const tensor = tf.node
-            .decodeImage(image)
-            .resizeNearestNeighbor([224, 224]) // Ubah ukuran gambar agar sesuai dengan input model
-            .expandDims() // Tambahkan dimensi batch
-            .toFloat(); // Mengubah tipe data menjadi float
+        const tensor = tf.node.decodeJpeg(image).resizeNearestNeighbor([224, 224]).expandDims().toFloat();
 
         // Lakukan prediksi menggunakan model
         const prediction = model.predict(tensor);
