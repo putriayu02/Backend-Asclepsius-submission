@@ -7,8 +7,8 @@ const ValidationError = require('../exceptions/ValidationError');
     try {
         // Inisialisasi server
         const server = Hapi.server({
-            port: 8000,
-            host: 'localhost',
+          port: process.env.PORT || 3000,
+          host: process.env.HOST || 'localhost',
             routes: {
                 cors: {
                     origin: ['*'], // Mengaktifkan CORS untuk semua origin
